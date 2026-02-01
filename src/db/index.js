@@ -28,7 +28,7 @@ Mongoose internally creates a Connection object and returns it.
     name: "backendDB",
     readyState: 1,
     ...
-  }
+}
 }
 
 */
