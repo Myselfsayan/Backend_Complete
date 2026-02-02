@@ -14,4 +14,5 @@ Both classes are blueprints, not responses by themselves.
 Class	Purpose
 ApiResponse	Blueprint for success response objects
 ApiError	Blueprint for error objects
+
 */
