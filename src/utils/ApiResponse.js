@@ -7,6 +7,7 @@ class ApiResponse{
     }
 }
 
+export {ApiResponse}
 
 /* 
 Both classes are blueprints, not responses by themselves.

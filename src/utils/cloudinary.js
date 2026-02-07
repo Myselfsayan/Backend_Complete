@@ -26,3 +26,5 @@ const uploadOnCloudinary = async (localFillePath)=>{
 cloudinary.uploader
   .upload("my_image.jpg")
   .then(result=>console.log(result));
+
+  export {uploadOnCloudinary}
