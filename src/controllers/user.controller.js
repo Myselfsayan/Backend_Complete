@@ -1,8 +1,10 @@
 import {asyncHandler} from '../utils/asyncHandler.js'
 import {ApiError} from '../utils/ApiError.js'
 import { User } from '../models/user.model.js'
-import {uploadoncloudinary} from '../utils/cloudinary.js'
+import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
+
+
 
 const registerUser = asyncHandler(async(req,res)=>{
     //Get user details from Frontend
@@ -38,8 +40,8 @@ const registerUser = asyncHandler(async(req,res)=>{
         throw new ApiError(400,"Avatar is required")
     }
 
-    const avatar = await uploadoncloudinary(avtarLocalPath)
-    const image = await uploadoncloudinary(coverImageLocalPath)
+    const avatar = await uploadOnCloudinary(avtarLocalPath)
+    const image = await uploadOnCloudinary(coverImageLocalPath)
 
     if(!avatar){
         throw new ApiError(400,"Avatar is required")
