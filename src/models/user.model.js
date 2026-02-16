@@ -82,7 +82,7 @@ userSchema.methods.generateRefreshToken = function () {
     jwt.sign(
         {
             _id : this._id
-            //Every record has _id
+            //Every record has _id , This is an unique code
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
