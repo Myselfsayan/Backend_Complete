@@ -84,6 +84,7 @@ userSchema.methods.generateRefreshToken = function () {
         {
             _id : this._id
             //Every record has _id , This is an unique code
+            //Refresh token stored in DB
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
