@@ -6,6 +6,7 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 
 
 
+
 const registerUser = asyncHandler(async(req,res)=>{
     //Get user details from Frontend
     //Validation
@@ -18,8 +19,8 @@ const registerUser = asyncHandler(async(req,res)=>{
     //return response to frontend
     
     const {userName,fullName ,email , password}= req.body
-    console.log("email",email)
-    console.log("FILES:", req.files);
+    // console.log("email",email)
+    // console.log("FILES:", req.files);
 
     // if(userName === ""){
     //     throw new ApiError(400,"Username is required")
@@ -34,8 +35,9 @@ const registerUser = asyncHandler(async(req,res)=>{
     if(existedUser){
         throw new ApiError(409,"User already exists")
     }
+    console.log("FILES:", req.files);
     const avatarLocalPath=req.files?.avatar[0]?.path;
-    const coverImageLocalPath=req.files?.coverImage[0]?.path;
+    const coverImageLocalPath=req.files?.coverImage?.[0]?.path;
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar is required")
@@ -44,10 +46,14 @@ const registerUser = asyncHandler(async(req,res)=>{
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
+    //console.log("Body",req.body)
     
     if(!avatar){
         throw new ApiError(400,"Avataaar is required")
     }
+    
+
+    
     const user = await User.create({
         fullName,
         avatar : avatar.url,
