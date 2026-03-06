@@ -8,6 +8,7 @@ const generateAccessandRefreshTokens = async(userId) => {
     try {
         const user = await User.findById(userId)
             const accessToken = user.generateAccessToken()
+            console.log("tknnnn",accessToken)
             const refreshToken = user.generateRefreshToken()
 
             user.refreshToken = refreshToken
@@ -99,7 +100,7 @@ const loginUser = asyncHandler(async(req,res)=>{
 
     const {email,userName,password} = req.body
 
-    if(!userName || !email){
+    if(!userName && !email){
         throw new ApiError(400,"email and Username is required")
     }
     //User -> this object is coming from Mongoose
@@ -127,6 +128,7 @@ const loginUser = asyncHandler(async(req,res)=>{
         htttpOnly : true,
         secure : true
     }
+    console.log("accstkn",accessToken)
     return res
     .status(200)
     .cookie("accessToken",accessToken,options)
@@ -155,8 +157,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
         }
     )
     const options = {
-        htttpOnly : true,
-        secure : true
+        httpOnly : true,
+        secure : false
     }
     return res
     .status(200)
