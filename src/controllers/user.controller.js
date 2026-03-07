@@ -4,19 +4,24 @@ import { User } from '../models/user.model.js'
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 
+
 const generateAccessandRefreshTokens = async(userId) => {
     try {
         const user = await User.findById(userId)
+        if(!user){
+            throw new ApiError(404,"User not found")
+        }
             const accessToken = user.generateAccessToken()
-            console.log("tknnnn",accessToken)
+            
             const refreshToken = user.generateRefreshToken()
 
-            user.refreshToken = refreshToken
+            user.refreshToken = refreshToken;
             await user.save({validateBeforeSave : false})
 
             return {accessToken , refreshToken}
 
     } catch (error) {
+        //console.log("TOKEN GENERATION ERROR:", error)
         throw new ApiError(500,"Something went wrong while generating Access and Refresh token")
     }
 }
@@ -125,10 +130,10 @@ const loginUser = asyncHandler(async(req,res)=>{
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
     const options = {
-        htttpOnly : true,
+        httpOnly : true,
         secure : true
     }
-    console.log("accstkn",accessToken)
+    //console.log("accstkn",accessToken)
     return res
     .status(200)
     .cookie("accessToken",accessToken,options)
