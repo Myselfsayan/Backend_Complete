@@ -4,9 +4,10 @@ import jwt from "jsonwebtoken"
 import { User } from "../models/user.model.js";
 
 
-//So the developer wrote "_" to signal:
+
 
 //“Yes, a parameter exists here, but we are not going to use it.”
+//So the developer wrote "_" to signal:
 export const verifyJWT = asyncHandler(async(req,_,next)=>{
     try {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
