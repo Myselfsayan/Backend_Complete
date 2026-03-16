@@ -93,6 +93,6 @@ userSchema.methods.generateRefreshToken = function () {
         }
     )
 }
-
+//
 export const User = mongoose.model("User",userSchema)
 //************  In mongoDB this 'User' will be saved as 'users'  ***************
