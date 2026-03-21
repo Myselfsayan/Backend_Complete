@@ -16,7 +16,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     if (query) {
         filter.$or = [
-            { title: { $regex: query, $options: "i" } },//$options: "i" yhis make case insensitive
+            { title: { $regex: query, $options: "i" } },//$options: "i" yhis make case insensitive 
             { description: { $regex: query, $options: "i" } }
         ];
     }
