@@ -21,8 +21,9 @@ export const getAllVideos = asyncHandler(async (req, res) => {
     // FILTER
     // ======================
     let filter = {};
-
+    
     // Filter by owner (userId)
+
     if (userId) {
         filter.owner = userId;
     }
@@ -67,7 +68,7 @@ export const getAllVideos = asyncHandler(async (req, res) => {
     // RESPONSE
     // ======================
 
-    
+
     res.status(200).json({
         success: true,
         totalVideos,
