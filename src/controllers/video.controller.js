@@ -7,33 +7,74 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 
-const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
+import asyncHandler from "express-async-handler";
+import Video from "../models/video.model.js";
+
+export const getAllVideos = asyncHandler(async (req, res) => {
+    let { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+
+    // Convert to numbers
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+
+    // ======================
+    // FILTER
+    // ======================
+    let filter = {};
+
+    // Filter by owner (userId)
     if (userId) {
-        filter.owner = userId; 
+        filter.owner = userId;
     }
 
+    // Search (title + description)
     if (query) {
         filter.$or = [
-            { title: { $regex: query, $options: "i" } },//$options: "i" yhis make case insensitive 
+            { title: { $regex: query, $options: "i" } },
             { description: { $regex: query, $options: "i" } }
         ];
     }
 
-    let sortOptions = {}
+    // ======================
+    // SORTING
+    // ======================
+    let sortOptions = {};
 
-const field = sortBy || "createdAt"
+    const field = sortBy || "createdAt"; // default sort
+    const order = sortType === "asc" ? 1 : -1;
 
-let order = -1
-if (sortType === "asc") {
-    order = 1
-}
+    sortOptions[field] = order;
 
-sortOptions[field] = order
+    // ======================
+    // PAGINATION
+    // ======================
+    const skip = (pageNum - 1) * limitNum;
 
+    // ======================
+    // DATABASE QUERY
+    // ======================
+    const videos = await Video.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limitNum);
 
-})
+    // ======================
+    // TOTAL COUNT (for frontend pagination)
+    // ======================
+    const totalVideos = await Video.countDocuments(filter);
+
+    // ======================
+    // RESPONSE
+    // ======================
+    
+    res.status(200).json({
+        success: true,
+        totalVideos,
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalVideos / limitNum),
+        videos
+    });
+});
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description} = req.body
