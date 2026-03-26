@@ -47,14 +47,35 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const {channelId} = req.params
-    const channel = await User.findById(channelId)
-    if(!channel){
-        throw new ApiError(404,"Channel not found")
+    if (!mongoose.Types.ObjectId.isValidObjectId(channelId)) {
+        throw new ApiError(400, "Invalid Channel ID");
     }
+
+    const channelObjectId = new mongoose.Types.ObjectId(channelId);
+
+    // ✅ Check channel exists
+    const channel = await User.findById(channelId);//Here mongoDB automatically converts it Object('........')...in this format internally
+    if (!channel) {
+        throw new ApiError(404, "Channel not found");
+    }
+
     //Find Subscribers
-    const subscribers = await Subscription.find({
-    channel: channelId
-})
+    const Subscribers = await Subscription.aggregate([{
+        $match: {
+            channel: channelObjectId
+        }
+    },
+    {
+        $lookup: {
+            from: "users",
+            localField: "subscriber",
+            foreignField: "_id",
+            as: "subscriber"
+        }
+    }
+
+    ])
+    
     res
     .status(200)
     .json({
