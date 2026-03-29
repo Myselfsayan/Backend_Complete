@@ -27,20 +27,80 @@ const createPlaylist = asyncHandler(async (req, res) => {
         owner : req.user._id,
         videos : []
     })
+    if(!playlist) {
+        throw new ApiError(500, "Failed to create playlist")
+    }
     res
     .status(201)
     .json(new ApiResponse(201, playlist, "Playlist created successfully"))
 })
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
-    const {userId} = req.params
-    //TODO: get user playlists
-})
+    const { userId } = req.params;
+
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user id");
+    }
+
+    const userExist = await User.exists({ _id: userId });
+    if (!userExist) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const isOwner = req.user?._id?.toString() === userId;
+
+    const query = isOwner
+        ? { owner: userId }
+        : { owner: userId, isPrivate: false };
+
+    const playlists = await Playlist.find(query)
+        .populate({
+        path: "videos",
+        select: "thumbnail title description duration createdAt"
+        })
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(
+        200,
+        playlists,
+        playlists.length
+            ? "Playlists fetched successfully"
+            : "No playlists found"
+        )
+    );
+});
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
     //TODO: get playlist by id
-})
+    if(!isValidObjectId(playlistId)){
+        throw new ApiError(400, "Invalid playlist id")
+    }
+
+    // 2. Fetch playlist
+    const playlist = await Playlist.findById(playlistId)
+
+    // 3. Not found check
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found");
+    }
+
+    // 4. Check ownership
+    const isOwner =
+        req.user?._id?.toString() === playlist.owner.toString();
+
+    // 5. Privacy check
+    if (playlist.isPrivate && !isOwner) {
+        throw new ApiError(403, "This playlist is private");
+    }
+
+    // 6. Response
+    return res.status(200).json(
+        new ApiResponse(200, playlist, "Playlist fetched successfully")
+    );
+});
+
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
