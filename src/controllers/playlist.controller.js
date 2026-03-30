@@ -181,14 +181,108 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
 const deletePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
+
     // TODO: delete playlist
+    if (!isValidObjectId(playlistId)) throw new ApiError(400, "Invalid playlist id");
+
+    //Authentication check
+    if(!req.user?._id){
+        throw new ApiError(401, "Unauthorized");
+    }
+    //Ownership check + Deletion
+    const deletedPlaylist = await Playlist.findOneAndDelete({
+        _id: playlistId,
+        owner: req.user._id
+    });
+    if(!deletedPlaylist){
+        throw new ApiError(404, "Playlist not found or you are not authorized");
+    }
+    return res.status(200).json(
+        new ApiResponse(200, deletedPlaylist, "Playlist deleted successfully")
+    );
 })
 
 const updatePlaylist = asyncHandler(async (req, res) => {
-    const {playlistId} = req.params
-    const {name, description} = req.body
-    //TODO: update playlist
-})
+    const { playlistId } = req.params;
+    const { name, description, isPrivate } = req.body;
+
+    // 1. Validate playlistId
+    if (!isValidObjectId(playlistId)) {
+        throw new ApiError(400, "Invalid playlist id");
+    }
+
+    // 2. Authentication
+    if (!req.user?._id) {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    // 3. Build update object dynamically (PATCH behavior)
+    const updateFields = {};
+
+    // Name validation
+    if (name !== undefined) {
+        if (typeof name !== "string" || !name.trim()) {
+            throw new ApiError(400, "Playlist name cannot be empty");
+        }
+        updateFields.name = name.trim();
+    }
+
+    // Description validation
+    if (description !== undefined) {
+        if (typeof description !== "string" || !description.trim()) {
+            throw new ApiError(400, "Playlist description cannot be empty");
+        }
+        updateFields.description = description.trim();
+    }
+
+    // isPrivate validation
+    if (isPrivate !== undefined) {
+        if (typeof isPrivate !== "boolean") {
+            throw new ApiError(400, "isPrivate must be a boolean");
+        }
+        updateFields.isPrivate = isPrivate;
+    }
+
+    // 4. Prevent empty update
+    if (Object.keys(updateFields).length === 0) {
+        throw new ApiError(
+            400,
+            "At least one field (name, description, isPrivate) must be provided"
+        );
+    }
+
+    // 5. Authorization + Atomic Update
+    const updatedPlaylist = await Playlist.findOneAndUpdate(
+        {
+            _id: playlistId,
+            owner: req.user._id
+        },
+        {
+            $set: updateFields
+        },
+        {
+            new: true,
+            runValidators: true //Apply schema validation rules when updating a document
+        }
+    );
+
+    // 6. Handle not found / unauthorized
+    if (!updatedPlaylist) {
+        throw new ApiError(
+            404,
+            "Playlist not found or you are not authorized"
+        );
+    }
+
+    // 7. Response
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            updatedPlaylist,
+            "Playlist updated successfully"
+        )
+    );
+});
 
 export {
     createPlaylist,
