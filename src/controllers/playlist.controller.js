@@ -148,6 +148,34 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
     // TODO: remove video from playlist
+    if (!isValidObjectId(playlistId)) throw new ApiError(400, "Invalid playlist id");
+    if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid video id");
+    //Authentication check
+    if (!req.user?._id) {
+    throw new ApiError(401, "Unauthorized");
+    }
+    const afterDeletedUpdatedPlaylist = await Playlist.findOneAndUpdate(
+        { 
+            _id: playlistId, 
+            owner: req.user._id ,// ownership check
+            videos:videoId 
+        }, 
+        { 
+            $pull: { videos: videoId } // atomic update
+        },       
+        { 
+            new: true //This tells Mongoose://“Return the UPDATED document, not the old one”
+        } 
+    );
+    if (!afterDeletedUpdatedPlaylist) {
+        throw new ApiError(404,"Playlist not found or you are not authorized");
+    }
+    return res.status(200).json(
+        new ApiResponse(
+            200, afterDeletedUpdatedPlaylist,
+            "Video removed from playlist successfully"
+        )
+    );
 
 })
 
