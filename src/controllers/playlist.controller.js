@@ -105,31 +105,45 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
-    if(!isValidObjectId(playlistId) || !isValidObjectId(videoId)){
-        throw new ApiError(400, "Invalid playlist id or video id")
+    if (!isValidObjectId(playlistId)) throw new ApiError(400, "Invalid playlist id");
+    if (!isValidObjectId(videoId)) throw new ApiError(400, "Invalid video id");
+    //Authentication check
+    if (!req.user?._id) {
+    throw new ApiError(401, "Unauthorized");
     }
-     // 2. Fetch playlist
-    const playlist = await Playlist.findById(playlistId);
-
-    if (!playlist) {
-        throw new ApiError(404, "Playlist not found");
-    }
-
-    // 4. Check video exists
-    const video = await Video.findById(videoId);
-    if (!video) {
+    //Video Existence check
+    const videoExists = await Video.exists({ _id: videoId });
+    if (!videoExists) {
         throw new ApiError(404, "Video not found");
     }
 
-    // 6. Add video
-    playlist.videos.push(videoId);
-    await playlist.save();
+    // (Assuming Steps 1–3 already done: validation, auth, video exists)
 
-    // 7. Return updated playlist
-    return res.status(200).json(
-        new ApiResponse(200, playlist, "Video added to playlist successfully")
+    // 4. Authorization + Update (combined)
+    const updatedPlaylist = await Playlist.findOneAndUpdate(
+        { _id: playlistId, owner: req.user._id }, // ownership check
+        { $addToSet: { videos: videoId } },       // atomic update
+        { new: true } //This tells Mongoose://“Return the UPDATED document, not the old one”
     );
-})
+
+    // 5. Handle not found / unauthorized
+    if (!updatedPlaylist) {
+        throw new ApiError(
+            404,
+            "Playlist not found or you are not authorized"
+        );
+    }
+
+    // 6. Return response
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            updatedPlaylist,
+            "Video added to playlist successfully"
+        )
+    );
+});
+
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
