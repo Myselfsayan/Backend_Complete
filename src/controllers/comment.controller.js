@@ -79,7 +79,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
       200,
       {
         comments,
-        pagination: {
+          pagination: {
           totalComments,
           totalPages,
           currentPage: pageNum,
